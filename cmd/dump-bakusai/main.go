@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 
@@ -24,23 +25,27 @@ func main() {
 }
 
 func run(uri string) error {
-	thread, err := scraper.GetThread(uri)
+	ctx := context.Background()
+
+	thread, err := scraper.GetThread(ctx, uri)
 	if err != nil {
 		return fmt.Errorf(`on scraper.GetThread("%s"): %w`, uri, err)
 	}
 
 	fmt.Fprintf(os.Stdout,
-		"# T: %s\n# C: %s\n# U: %s\n# P: %s\n# N: %s\n",
+		"# T: %s\n# C: %s\n# A: %s\n# U: %s\n# M: %d\n# P: %d\n# N: %d\n",
 		thread.Title,
-		thread.CreatedAt.Format("2006/01/02 15:04"),
-		thread.URI,
-		thread.PrevURI,
-		thread.NextURI,
+		thread.DatePublished.Format("2006/01/02 15:04"),
+		thread.Author,
+		thread.URI(),
+		thread.PageNum,
+		thread.PrevTID,
+		thread.NextTID,
 	)
 
-	for _, a := range thread.Articles {
-		fmt.Fprintf(os.Stdout, "==== %d %s\n", a.ID, a.PostAt.Format("2006/01/02 15:04"))
-		fmt.Fprintf(os.Stdout, "%s\n\n", a.BodyText)
+	for _, res := range thread.ResList {
+		fmt.Fprintf(os.Stdout, "==== %d %s\n", res.RRID, res.CommentTime.Format("2006/01/02 15:04"))
+		fmt.Fprintf(os.Stdout, "%s\n\n", res.CommentText)
 	}
 
 	return nil
