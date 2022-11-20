@@ -2,7 +2,6 @@ package parser_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -27,30 +26,30 @@ func GetTDResList(t *testing.T, html string) *goquery.Selection {
 	return tdResList
 }
 
-func AreEqualJSON(t *testing.T, got interface{}, want string) (bool, error) {
+func AreEqualJSON(t *testing.T, got interface{}, want string) bool {
 	t.Helper()
 
 	b, err := json.Marshal(got)
 	if err != nil {
-		t.Errorf("on json.Marshal(got): %s", err.Error())
+		t.Fatal(err)
 	}
 
 	var o1 interface{}
 
 	if err := json.Unmarshal(b, &o1); err != nil {
-		return false, fmt.Errorf("on json.Unmarshal(got): %s", err.Error())
+		t.Fatal(err)
 	}
 
 	var o2 interface{}
 
 	if err := json.Unmarshal([]byte(want), &o2); err != nil {
-		return false, fmt.Errorf("on json.Unmarshal(want): %s", err.Error())
+		t.Fatal(err)
 	}
 
-	return reflect.DeepEqual(o1, o2), nil
+	return reflect.DeepEqual(o1, o2)
 }
 
-func TestParseThread(t *testing.T) {
+func TestParseThread(t *testing.T) { //nolint:funlen
 	t.Parallel()
 
 	tests := []struct {
@@ -81,7 +80,7 @@ func TestParseThread(t *testing.T) {
 				</td>
 			</table>`,
 			want: `{"AreaCode":0, "CategoryID":0, "BoardID":0, "ThreadID":0, "PrevTID":0, "NextTID":0,
-				"PageNum":1, "DatePublished":"2022-02-03T12:34:00+09:00",
+				"DatePublished":"2022-02-03T12:34:00+09:00",
 				"Author":"",
 				"Title":"スレタイ",
 				"ResList":[
@@ -115,12 +114,7 @@ func TestParseThread(t *testing.T) {
 				return
 			}
 
-			equals, err := AreEqualJSON(t, got, tt.want)
-			if err != nil {
-				t.Errorf("AreEqualJSON() error = %v", err)
-			}
-
-			if !equals {
+			if !AreEqualJSON(t, got, tt.want) {
 				t.Errorf("ParseThread() = %v, want %v", got, tt.want)
 			}
 		})

@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -51,38 +50,10 @@ func parseHeader(tdResList *goquery.Selection) (*bakusai.Thread, error) {
 
 	thread.DatePublished = datePublished
 
-	// ページ番号
-	strPageNum := tdResList.Find(`div.paging span.paging_number`).Text()
-
-	pageNum, err := strconv.Atoi(strPageNum)
-	if err != nil {
-		return nil, fmt.Errorf(`on strconv.Atoi("%s"): %w`, strPageNum, err)
-	}
-
-	thread.PageNum = pageNum
-
 	// 前スレ・次スレ
 	divPager := tdResList.Find(`div#thr_pager`)
-
-	uriPrev := divPager.Find(`div.sre_mae a`).AttrOr("href", "")
-	if uriPrev != "" {
-		t, err := ParseThreadURI(uriPrev)
-		if err != nil {
-			return nil, fmt.Errorf(`on ParseThreadURI("%s"): %w`, uriPrev, err)
-		}
-
-		thread.PrevTID = t.ThreadID
-	}
-
-	uriNext := divPager.Find(`div.sre_tugi a`).AttrOr("href", "")
-	if uriNext != "" {
-		t, err := ParseThreadURI(uriNext)
-		if err != nil {
-			return nil, fmt.Errorf(`on ParseThreadURI("%s"): %w`, uriNext, err)
-		}
-
-		thread.NextTID = t.ThreadID
-	}
+	thread.PrevURI = divPager.Find(`div.sre_mae a`).AttrOr("href", "")
+	thread.NextURI = divPager.Find(`div.sre_tugi a`).AttrOr("href", "")
 
 	return &thread, nil
 }

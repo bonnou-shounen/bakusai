@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/bonnou-shounen/bakusai/scraper"
+	"github.com/bonnou-shounen/bakusai/util"
 )
 
 func main() {
@@ -27,20 +28,19 @@ func main() {
 func run(uri string) error {
 	ctx := context.Background()
 
-	thread, err := scraper.GetThread(ctx, uri)
+	thread, err := scraper.ScrapeThread(ctx, uri)
 	if err != nil {
 		return fmt.Errorf(`on scraper.GetThread("%s"): %w`, uri, err)
 	}
 
 	fmt.Fprintf(os.Stdout,
-		"# T: %s\n# C: %s\n# A: %s\n# U: %s\n# M: %d\n# P: %d\n# N: %d\n",
+		"# T: %s\n# C: %s\n# A: %s\n# U: %s\n# P: %s\n# N: %s\n",
 		thread.Title,
 		thread.DatePublished.Format("2006/01/02 15:04"),
 		thread.Author,
 		thread.URI(),
-		thread.PageNum,
-		thread.PrevTID,
-		thread.NextTID,
+		util.ThreadPrevURI(thread),
+		util.ThreadNextURI(thread),
 	)
 
 	for _, res := range thread.ResList {
