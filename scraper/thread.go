@@ -59,10 +59,17 @@ func ScrapeThread(ctx context.Context, argURI string) (*bakusai.Thread, error) {
 func scrapeThreads(ctx context.Context, thread *bakusai.Thread, lastPage int) ([]*bakusai.Thread, error) {
 	pageThreads := make([]*bakusai.Thread, lastPage)
 
-	eg, egCtx := errgroup.WithContext(ctx, 5)
+	/*
+		1リクエスト/秒のアクセス頻度制限があるようで
+		並列化や秒未満のリトライはエラーが頻発するため
+		実質シングルスレッドにしておく
+	*/
+	eg, egCtx := errgroup.WithContext(ctx, 1)
 
 	for page := 1; page < lastPage; page++ {
 		page := page
+
+		time.Sleep(1 * time.Second)
 
 		eg.Go(func() error {
 			threadOnPage, err := scrapeThreadOnPage(egCtx, thread.PageURI(page))
@@ -85,15 +92,13 @@ func scrapeThreads(ctx context.Context, thread *bakusai.Thread, lastPage int) ([
 
 func scrapeThreadOnPage(ctx context.Context, uri string) (*bakusai.Thread, error) {
 	resp, err := resty.New().
-		SetRetryCount(10).SetRetryWaitTime(2 * time.Second).SetRetryMaxWaitTime(30 * time.Second).
+		SetRetryCount(10).SetRetryWaitTime(1 * time.Second).SetRetryMaxWaitTime(3 * time.Second).
 		AddRetryCondition(func(r *resty.Response, err error) bool {
-			if !strings.Contains(string(r.Body()), `<td class="reslist_td">`) {
-				fmt.Fprintf(os.Stderr, "retry: %s\n", r.Request.URL)
-
-				return true
-			}
-
-			return false
+			// アクセス頻度制限にかかると記事のないエラーページが返る
+			return !strings.Contains(string(r.Body()), `<td class="reslist_td">`)
+		}).
+		AddRetryHook(func(r *resty.Response, err error) {
+			fmt.Fprintf(os.Stderr, "retry: %s\n", r.Request.URL)
 		}).
 		R().SetContext(ctx).
 		Get(uri)
@@ -110,6 +115,8 @@ func scrapeThreadOnPage(ctx context.Context, uri string) (*bakusai.Thread, error
 	if err != nil {
 		return nil, fmt.Errorf(`on parser.ParseThread(): %w`, err)
 	}
+
+	// fmt.Fprintf(os.Stderr, "done: %s\n", uri)
 
 	return thread, nil
 }

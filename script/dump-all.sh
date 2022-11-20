@@ -29,6 +29,7 @@ while true; do
     if [[ -z "$prev" ]]; then
         break
     fi
-
     uri="$prev"
+
+    sleep 1
 done
