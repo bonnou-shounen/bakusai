@@ -46,7 +46,13 @@ func AreEqualJSON(t *testing.T, got interface{}, want string) bool {
 		t.Fatal(err)
 	}
 
-	return reflect.DeepEqual(o1, o2)
+	if !reflect.DeepEqual(o1, o2) {
+		t.Errorf("got: %s\n", string(b))
+
+		return false
+	}
+
+	return true
 }
 
 func TestParseThread(t *testing.T) { //nolint:funlen
@@ -68,9 +74,11 @@ func TestParseThread(t *testing.T) { //nolint:funlen
 					</dt>
 					<dl id="res_list">
 						<div class="article" id="res1">
+							<span itemprop="commentTime">2022/02/04 23:45</span>
 							<div itemprop="commentText">コメント1</div>
 						</div>
 						<div class="article" id="res2">
+							<span itemprop="commentTime">2022/02/05 06:17</span>
 							<div itemprop="commentText">コメント2</div>
 						</div>
 					</dl>
@@ -79,20 +87,20 @@ func TestParseThread(t *testing.T) { //nolint:funlen
 					</div>
 				</td>
 			</table>`,
-			want: `{"AreaCode":0, "CategoryID":0, "BoardID":0, "ThreadID":0, "PrevTID":0, "NextTID":0,
+			want: `{"AreaCode":0, "CategoryID":0, "BoardID":0, "ThreadID":0, "PrevURI":"", "NextURI":"",
 				"DatePublished":"2022-02-03T12:34:00+09:00",
 				"Author":"",
 				"Title":"スレタイ",
 				"ResList":[
 					{"AreaCode":0, "CategoryID":0, "BoardID":0, "ThreadID":0,
 						"RRID":1,
-						"CommentTime":"0001-01-01T00:00:00Z",
+						"CommentTime":"2022-02-04T23:45:00+09:00",
 						"Name":"",
 						"CommentText":"コメント1"
 					},
 					{"AreaCode":0, "CategoryID":0, "BoardID":0, "ThreadID":0,
 						"RRID":2,
-						"CommentTime":"0001-01-01T00:00:00Z",
+						"CommentTime":"2022-02-05T06:17:00+09:00",
 						"Name":"",
 						"CommentText":"コメント2"
 					}

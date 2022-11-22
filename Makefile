@@ -5,4 +5,4 @@ test:
 	go test  ./...
 
 build:
-	go build ./cmd/dump-bakusai
+	go build ./cmd/bakusai
