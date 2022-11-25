@@ -4,7 +4,7 @@ cd `dirname $0`/..
 mkdir -p tmp
 tmpf=tmp/tmp.txt
 
-dump=./dump-bakusai
+dump="./bakusai dump-thread"
 
 uri="$1"
 

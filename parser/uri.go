@@ -22,7 +22,7 @@ func ParseResURI(uri string) (*bakusai.Res, error) {
 	res.CategoryID = param["ctgid"]
 	res.BoardID = param["bid"]
 	res.ThreadID = param["tid"]
-	res.RRID = param["rrid"]
+	res.ResID = param["rrid"]
 
 	return &res, nil
 }

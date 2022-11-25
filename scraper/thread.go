@@ -33,7 +33,7 @@ func ScrapeThread(ctx context.Context, argURI string) (*bakusai.Thread, error) {
 	thread.PrevURI = lastThread.PrevURI
 	thread.NextURI = lastThread.NextURI
 
-	lastRRID := lastThread.ResList[len(lastThread.ResList)-1].RRID
+	lastRRID := lastThread.ResList[len(lastThread.ResList)-1].ResID
 	lastPage := (lastRRID + 49) / 50
 
 	if lastPage == 1 {

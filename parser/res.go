@@ -25,7 +25,7 @@ func ParseRes(divRes *goquery.Selection) (*bakusai.Res, error) {
 		return nil, fmt.Errorf(`on strconv.Atoi("%s"): %w`, strID, err)
 	}
 
-	res.RRID = rrID
+	res.ResID = rrID
 
 	strCommentTime := divRes.Find(`span[itemprop="commentTime"]`).Text()
 	if strCommentTime != "" {

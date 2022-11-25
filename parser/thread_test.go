@@ -93,13 +93,13 @@ func TestParseThread(t *testing.T) { //nolint:funlen
 				"Title":"スレタイ",
 				"ResList":[
 					{"AreaCode":0, "CategoryID":0, "BoardID":0, "ThreadID":0,
-						"RRID":1,
+						"ResID":1,
 						"CommentTime":"2022-02-04T23:45:00+09:00",
 						"Name":"",
 						"CommentText":"コメント1"
 					},
 					{"AreaCode":0, "CategoryID":0, "BoardID":0, "ThreadID":0,
-						"RRID":2,
+						"ResID":2,
 						"CommentTime":"2022-02-05T06:17:00+09:00",
 						"Name":"",
 						"CommentText":"コメント2"

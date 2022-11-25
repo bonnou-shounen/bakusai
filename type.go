@@ -12,16 +12,16 @@ type Res struct {
 	CategoryID  int
 	BoardID     int
 	ThreadID    int
-	RRID        int
-	CommentTime time.Time
+	ResID       int
 	Name        string
+	CommentTime time.Time
 	CommentText string
 }
 
 func (r *Res) URI() string {
 	return fmt.Sprintf(
 		`%s/thr_res_show/acode=%d/ctgid=%d/bid=%d/tid=%d/rrid=%d/`,
-		RootURI, r.AreaCode, r.CategoryID, r.BoardID, r.ThreadID, r.RRID,
+		RootURI, r.AreaCode, r.CategoryID, r.BoardID, r.ThreadID, r.ResID,
 	)
 }
 
