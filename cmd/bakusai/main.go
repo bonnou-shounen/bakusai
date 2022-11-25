@@ -6,12 +6,12 @@ import (
 )
 
 func main() {
-	opt := cmd.Option{}
+	cli := cmd.CLI{}
 	ctx := kong.Parse(
-		&opt,
+		&cli,
 		kong.Name("bakusai"),
 		kong.ShortUsageOnError(),
 	)
 
-	ctx.FatalIfErrorf(ctx.Run(&opt))
+	ctx.FatalIfErrorf(ctx.Run(&cli))
 }

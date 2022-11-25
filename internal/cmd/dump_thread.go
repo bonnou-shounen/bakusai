@@ -16,10 +16,10 @@ type DumpThread struct {
 	OptURI string `name:"uri" optional:"" hidden:""`
 }
 
-func (d *DumpThread) Run(o *Option) error {
+func (c *DumpThread) Run(o *CLI) error {
 	ctx := context.Background()
 
-	uri := d.getURI()
+	uri := c.getURI()
 	if uri == "" {
 		return fmt.Errorf(`on getURI(): missing URI`)
 	}
@@ -29,24 +29,24 @@ func (d *DumpThread) Run(o *Option) error {
 		return fmt.Errorf(`on scraper.ScrapeThread("%s"): %w`, uri, err)
 	}
 
-	d.dump(thread)
+	c.dump(thread)
 
 	return nil
 }
 
-func (d *DumpThread) getURI() string {
-	if d.URI != "" {
-		return d.URI
+func (c *DumpThread) getURI() string {
+	if c.URI != "" {
+		return c.URI
 	}
 
-	if d.OptURI != "" {
-		return d.OptURI
+	if c.OptURI != "" {
+		return c.OptURI
 	}
 
-	return d.readURI()
+	return c.readURI()
 }
 
-func (d *DumpThread) readURI() string {
+func (c *DumpThread) readURI() string {
 	fmt.Fprint(os.Stderr, "paste thread URI: ")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
@@ -54,7 +54,7 @@ func (d *DumpThread) readURI() string {
 	return scanner.Text()
 }
 
-func (d *DumpThread) dump(thread *bakusai.Thread) {
+func (c *DumpThread) dump(thread *bakusai.Thread) {
 	fmt.Fprintf(os.Stdout,
 		"# T: %s\n# C: %s\n# A: %s\n# U: %s\n# P: %s\n# N: %s\n",
 		thread.Title,
@@ -66,7 +66,7 @@ func (d *DumpThread) dump(thread *bakusai.Thread) {
 	)
 
 	for _, res := range thread.ResList {
-		fmt.Fprintf(os.Stdout, "==== %d %s\n", res.RRID, res.CommentTime.Format("2006/01/02 15:04"))
+		fmt.Fprintf(os.Stdout, "==== %c %s\n", res.ResID, res.CommentTime.Format("2006/01/02 15:04"))
 		fmt.Fprintf(os.Stdout, "%s\n\n", res.CommentText)
 	}
 }
