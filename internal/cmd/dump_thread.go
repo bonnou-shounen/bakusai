@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/bonnou-shounen/bakusai"
-	"github.com/bonnou-shounen/bakusai/parser"
 	"github.com/bonnou-shounen/bakusai/scraper"
 )
 
@@ -16,7 +15,7 @@ type DumpThread struct {
 	OptURI string `name:"uri" optional:"" hidden:""`
 }
 
-func (c *DumpThread) Run(o *CLI) error {
+func (c *DumpThread) Run() error {
 	ctx := context.Background()
 
 	uri := c.getURI()
@@ -60,26 +59,16 @@ func (c *DumpThread) dump(thread *bakusai.Thread) {
 		thread.Title,
 		thread.DatePublished.Format("2006/01/02 15:04"),
 		thread.Author,
-		thread.URI(),
-		canonicalURI(thread.PrevURI),
-		canonicalURI(thread.NextURI),
+		thread.URI,
+		thread.PrevURI,
+		thread.NextURI,
 	)
 
 	for _, res := range thread.ResList {
-		fmt.Fprintf(os.Stdout, "==== %c %s\n", res.ResID, res.CommentTime.Format("2006/01/02 15:04"))
-		fmt.Fprintf(os.Stdout, "%s\n\n", res.CommentText)
+		fmt.Fprintf(os.Stdout,
+			"==== %d %s %s\n%s\n\n",
+			res.ResID, res.CommentTime.Format("2006/01/02 15:04"), res.Name,
+			res.CommentText,
+		)
 	}
-}
-
-func canonicalURI(uri string) string {
-	if uri == "" {
-		return ""
-	}
-
-	thread, err := parser.ParseThreadURI(uri)
-	if err != nil {
-		return ""
-	}
-
-	return thread.URI()
 }

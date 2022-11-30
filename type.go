@@ -8,27 +8,15 @@ import (
 const RootURI = "https://bakusai.com"
 
 type Res struct {
-	AreaCode    int
-	CategoryID  int
-	BoardID     int
-	ThreadID    int
+	URI         string
 	ResID       int
 	Name        string
 	CommentTime time.Time
 	CommentText string
 }
 
-func (r *Res) URI() string {
-	return fmt.Sprintf(
-		`%s/thr_res_show/acode=%d/ctgid=%d/bid=%d/tid=%d/rrid=%d/`,
-		RootURI, r.AreaCode, r.CategoryID, r.BoardID, r.ThreadID, r.ResID,
-	)
-}
-
 type Thread struct {
-	AreaCode      int
-	CategoryID    int
-	BoardID       int
+	URI           string
 	ThreadID      int
 	DatePublished time.Time
 	Author        string
@@ -38,33 +26,18 @@ type Thread struct {
 	NextURI       string
 }
 
-func (t *Thread) URI() string {
-	return fmt.Sprintf(
-		`%s/thr_res/acode=%d/ctgid=%d/bid=%d/tid=%d/`,
-		RootURI, t.AreaCode, t.CategoryID, t.BoardID, t.ThreadID,
-	)
-}
-
-func (t *Thread) LastPageURI() string {
-	return t.URI()
-}
-
 func (t *Thread) PageURI(page int) string {
-	if page == 0 {
-		return t.URI()
-	}
-
 	if page < 0 {
-		// 最新からの相対
-		return fmt.Sprintf(
-			`%s/thr_res/acode=%d/ctgid=%d/bid=%d/tid=%d/p=%d/`,
-			RootURI, t.AreaCode, t.CategoryID, t.BoardID, t.ThreadID, -page,
-		)
+		return fmt.Sprintf("%sp=%d/", t.URI, -page)
 	}
 
-	// 最初から
-	return fmt.Sprintf(
-		`%s/thr_res/acode=%d/ctgid=%d/bid=%d/tid=%d/p=%d/rw=1/`,
-		RootURI, t.AreaCode, t.CategoryID, t.BoardID, t.ThreadID, page,
-	)
+	if page == 0 {
+		return t.URI
+	}
+
+	if page == 1 {
+		return fmt.Sprintf("%srw=1/", t.URI)
+	}
+
+	return fmt.Sprintf("%sp=%d/rw=1/", t.URI, page)
 }

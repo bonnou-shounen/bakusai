@@ -1,136 +1,100 @@
 package scraper
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"os"
-	"strings"
+	"log"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/bonnou-shounen/bakusai"
 	"github.com/bonnou-shounen/bakusai/parser"
-	"github.com/go-resty/resty/v2"
-	"github.com/jesse0michael/errgroup"
 )
 
-func ScrapeThread(ctx context.Context, argURI string) (*bakusai.Thread, error) {
-	thread, err := parser.ParseThreadURI(argURI)
+func ScrapeThread(ctx context.Context, uri string) (*bakusai.Thread, error) {
+	log.Println("scraping last page...")
+
+	lastThread, lastResID, err := scrapeLastThread(ctx, uri)
 	if err != nil {
-		return nil, fmt.Errorf(`on thread.ParseURI("%s"): %w`, argURI, err)
+		return nil, fmt.Errorf(`on scrapeLastThread(): %w`, err)
 	}
 
-	lastThread, err := scrapeThreadOnPage(ctx, thread.URI())
-	if err != nil {
-		return nil, fmt.Errorf(`on getThread(last): %w`, err)
-	}
+	lastPage := (lastResID + 49) / 50
 
-	thread.DatePublished = lastThread.DatePublished
-	thread.Author = lastThread.Author
-	thread.Title = lastThread.Title
-	thread.PrevURI = lastThread.PrevURI
-	thread.NextURI = lastThread.NextURI
-
-	lastRRID := lastThread.ResList[len(lastThread.ResList)-1].ResID
-	lastPage := (lastRRID + 49) / 50
+	log.Printf("was page %d", lastPage)
 
 	if lastPage == 1 {
-		thread.ResList = lastThread.ResList
-
-		return thread, nil
+		return lastThread, nil
 	}
 
-	pageThreads, err := scrapeThreads(ctx, thread, lastPage)
+	thread := bakusai.Thread{
+		URI:     lastThread.URI,
+		ResList: make([]*bakusai.Res, 0, lastResID),
+	}
+
+	partThreads, err := scrapeThreads(ctx, &thread, lastPage-1)
 	if err != nil {
-		return nil, fmt.Errorf(`on getPageThreads(): %w`, err)
+		return nil, fmt.Errorf(`on scrapeThreads(): %w`, err)
 	}
 
 	for page := 1; page < lastPage; page++ {
-		thread.ResList = append(thread.ResList, pageThreads[page].ResList...)
+		thread.ResList = append(thread.ResList, partThreads[page].ResList...)
 	}
 
-	thread.ResList = append(thread.ResList, lastThread.ResList[lastPage*50-lastRRID:]...)
+	thread.ResList = append(thread.ResList, lastThread.ResList[lastPage*50-lastResID:]...)
 
-	return thread, nil
+	return &thread, nil
+}
+
+func scrapeLastThread(ctx context.Context, argURI string) (*bakusai.Thread, int, error) {
+	uri, err := parser.CanonizeThreadURI(argURI)
+	if err != nil {
+		return nil, 0, fmt.Errorf(`on parser.CanonizeThreadURI("%s"): %w`, argURI, err)
+	}
+
+	thread, err := ScrapePartThread(ctx, uri)
+	if err != nil {
+		return nil, 0, fmt.Errorf(`on ScrapePartThread(last): %w`, err)
+	}
+
+	thread.URI = uri
+
+	lastResID := thread.ResList[len(thread.ResList)-1].ResID
+
+	return thread, lastResID, nil
 }
 
 func scrapeThreads(ctx context.Context, thread *bakusai.Thread, lastPage int) ([]*bakusai.Thread, error) {
-	pageThreads := make([]*bakusai.Thread, lastPage)
+	threads := make([]*bakusai.Thread, lastPage+1)
 
-	/*
-		1リクエスト/秒のアクセス頻度制限があるようで
-		並列化や秒未満のリトライはエラーが頻発するため
-		実質シングルスレッドにしておく
-	*/
-	eg, egCtx := errgroup.WithContext(ctx, 1)
+	// 1リクエスト/秒のアクセス頻度制限があるようなので控えめに
+	concurrency := 2
 
-	for page := 1; page < lastPage; page++ {
+	eg, egCtx := errgroup.WithContext(ctx)
+	eg.SetLimit(concurrency)
+
+	for page := 1; page <= lastPage; page++ {
 		page := page
 
-		time.Sleep(1 * time.Second)
-
+		time.Sleep(time.Duration(1.0/concurrency) * time.Second)
 		eg.Go(func() error {
-			threadOnPage, err := scrapeThreadOnPage(egCtx, thread.PageURI(page))
+			log.Printf("scraping page %d...", page)
+
+			partThread, err := ScrapePartThread(egCtx, thread.PageURI(page))
 			if err != nil {
-				return fmt.Errorf(`on getThread([page=%d]): %w`, page, err)
+				return fmt.Errorf(`on Scrape([page=%d]): %w`, page, err)
 			}
 
-			pageThreads[page] = threadOnPage
+			threads[page] = partThread
 
 			return nil
 		})
 	}
 
 	if err := eg.Wait(); err != nil {
-		return nil, fmt.Errorf("on goroutine: %w", err)
+		return nil, fmt.Errorf(`from eg.Go(): %w`, err)
 	}
 
-	return pageThreads, nil
-}
-
-func scrapeThreadOnPage(ctx context.Context, uri string) (*bakusai.Thread, error) {
-	resp, err := resty.New().
-		SetRetryCount(10).SetRetryWaitTime(1 * time.Second).SetRetryMaxWaitTime(3 * time.Second).
-		AddRetryCondition(func(r *resty.Response, err error) bool {
-			// アクセス頻度制限にかかると記事のないエラーページが返る
-			return !strings.Contains(string(r.Body()), `<td class="reslist_td">`)
-		}).
-		AddRetryHook(func(r *resty.Response, err error) {
-			fmt.Fprintf(os.Stderr, "retry: %s\n", r.Request.URL)
-		}).
-		R().SetContext(ctx).
-		Get(uri)
-	if err != nil {
-		return nil, fmt.Errorf(`on resty.Get("%s"): %w`, uri, err)
-	}
-
-	tdResList, err := findTDResList(bytes.NewReader(resp.Body()))
-	if err != nil {
-		return nil, fmt.Errorf(`on parser.FindTDResList(): %w`, err)
-	}
-
-	thread, err := parser.ParseThread(tdResList)
-	if err != nil {
-		return nil, fmt.Errorf(`on parser.ParseThread(): %w`, err)
-	}
-
-	// fmt.Fprintf(os.Stderr, "done: %s\n", uri)
-
-	return thread, nil
-}
-
-func findTDResList(reader io.Reader) (*goquery.Selection, error) {
-	doc, err := goquery.NewDocumentFromReader(reader)
-	if err != nil {
-		return nil, fmt.Errorf(`on goquery.NewDocumentFromReader(): %w`, err)
-	}
-
-	tdResList := doc.Find(`table#inner_container td.reslist_td`)
-	if tdResList.Length() == 0 {
-		return nil, fmt.Errorf(`missing: td.reslist_td`)
-	}
-
-	return tdResList, nil
+	return threads, nil
 }

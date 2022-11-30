@@ -4,62 +4,37 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-
-	"github.com/bonnou-shounen/bakusai"
 )
 
-func ParseResURI(uri string) (*bakusai.Res, error) {
-	res := bakusai.Res{}
-
-	keys := []string{"acode", "ctgid", "bid", "tid", "rrid"}
-
-	param, err := parseURI(uri, keys)
-	if err != nil {
-		return nil, err
-	}
-
-	res.AreaCode = param["acode"]
-	res.CategoryID = param["ctgid"]
-	res.BoardID = param["bid"]
-	res.ThreadID = param["tid"]
-	res.ResID = param["rrid"]
-
-	return &res, nil
-}
-
-func ParseThreadURI(uri string) (*bakusai.Thread, error) {
-	thread := bakusai.Thread{}
-
-	keys := []string{"acode", "ctgid", "bid", "tid"}
-
-	param, err := parseURI(uri, keys)
-	if err != nil {
-		return nil, err
-	}
-
-	thread.AreaCode = param["acode"]
-	thread.CategoryID = param["ctgid"]
-	thread.BoardID = param["bid"]
-	thread.ThreadID = param["tid"]
-
-	return &thread, nil
-}
+const URITop = "https://bakusai.com"
 
 var uriParamsRe = regexp.MustCompile(`([^=/]+)=(\d+)`)
 
-func parseURI(uri string, keys []string) (map[string]int, error) {
-	param := map[string]int{}
+func CanonizeThreadURI(uri string) (string, error) {
+	param := map[string]string{}
 
 	matches := uriParamsRe.FindAllStringSubmatch(uri, -1)
-	for _, match := range matches {
-		param[match[1]], _ = strconv.Atoi(match[2])
+	for _, m := range matches {
+		param[m[1]] = m[2]
 	}
 
-	for _, key := range keys {
-		if _, ok := param[key]; !ok {
-			return nil, fmt.Errorf("missing: %s", key)
+	idOf := map[string]int{}
+
+	for _, key := range []string{"acode", "ctgid", "bid", "tid"} {
+		id, err := strconv.Atoi(param[key])
+		if err != nil {
+			return "", fmt.Errorf(`on strconv.Atoi("%s"): %w`, param[key], err)
 		}
+
+		idOf[key] = id
 	}
 
-	return param, nil
+	return fmt.Sprintf(
+		"%s/thr_res/acode=%d/ctgid=%d/bid=%d/tid=%d/",
+		URITop,
+		idOf["acode"],
+		idOf["ctgid"],
+		idOf["bid"],
+		idOf["tid"],
+	), nil
 }
