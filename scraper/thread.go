@@ -28,10 +28,8 @@ func ScrapeThread(ctx context.Context, uri string) (*bakusai.Thread, error) {
 		return lastThread, nil
 	}
 
-	thread := bakusai.Thread{
-		URI:     lastThread.URI,
-		ResList: make([]*bakusai.Res, 0, lastResID),
-	}
+	thread := *lastThread
+	thread.ResList = make([]*bakusai.Res, 0, lastResID)
 
 	partThreads, err := scrapeThreads(ctx, &thread, lastPage-1)
 	if err != nil {
