@@ -5,7 +5,9 @@ import (
 	"time"
 )
 
-const RootURI = "https://bakusai.com"
+const RootURI = "https://bakusai.com/"
+
+const MaxPageRes = 50
 
 type Res struct {
 	URI         string

@@ -20,7 +20,7 @@ func ScrapeThread(ctx context.Context, uri string) (*bakusai.Thread, error) {
 		return nil, fmt.Errorf(`on scrapeLastThread(): %w`, err)
 	}
 
-	lastPage := (lastResID + 49) / 50
+	lastPage := (lastResID + bakusai.MaxPageRes - 1) / bakusai.MaxPageRes
 
 	log.Printf("was page %d", lastPage)
 
