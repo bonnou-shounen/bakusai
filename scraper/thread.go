@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
-
-	"golang.org/x/sync/errgroup"
 
 	"github.com/bonnou-shounen/bakusai"
 	"github.com/bonnou-shounen/bakusai/parser"
@@ -66,32 +63,16 @@ func scrapeLastThread(ctx context.Context, argURI string) (*bakusai.Thread, int,
 func scrapeThreads(ctx context.Context, thread *bakusai.Thread, lastPage int) ([]*bakusai.Thread, error) {
 	threads := make([]*bakusai.Thread, lastPage+1)
 
-	// 1リクエスト/秒のアクセス頻度制限があるようなので控えめに
-	concurrency := 2
-
-	eg, egCtx := errgroup.WithContext(ctx)
-	eg.SetLimit(concurrency)
-
 	for page := 1; page <= lastPage; page++ {
-		page := page
 
-		time.Sleep(time.Duration(1.0/concurrency) * time.Second)
-		eg.Go(func() error {
-			log.Printf("scraping page %d...", page)
+		log.Printf("scraping page %d...", page)
 
-			partThread, err := ScrapePartThread(egCtx, thread.PageURI(page))
-			if err != nil {
-				return fmt.Errorf(`on Scrape([page=%d]): %w`, page, err)
-			}
+		partThread, err := ScrapePartThread(ctx, thread.PageURI(page))
+		if err != nil {
+			return nil, fmt.Errorf(`on Scrape([page=%d]): %w`, page, err)
+		}
 
-			threads[page] = partThread
-
-			return nil
-		})
-	}
-
-	if err := eg.Wait(); err != nil {
-		return nil, fmt.Errorf(`from eg.Go(): %w`, err)
+		threads[page] = partThread
 	}
 
 	return threads, nil

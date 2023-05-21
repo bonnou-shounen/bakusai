@@ -53,15 +53,6 @@ func ParseRes(divRes *goquery.Selection, res *bakusai.Res) error {
 
 	strID := strings.TrimPrefix(strResnumb, "#")
 
-	/*
-		strID, exists := divRes.Attr("id")
-		if !exists {
-			return fmt.Errorf(`missing: divRes.Attr("id")`)
-		}
-
-		strID = strings.TrimPrefix(strID, "res")
-	*/
-
 	rrID, err := strconv.Atoi(strID)
 	if err != nil {
 		return fmt.Errorf(`on strconv.Atoi("%s"): %w`, strID, err)

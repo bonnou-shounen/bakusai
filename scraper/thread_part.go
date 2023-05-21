@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/go-resty/resty/v2"
+
 	"github.com/bonnou-shounen/bakusai"
 	"github.com/bonnou-shounen/bakusai/parser"
-	"github.com/go-resty/resty/v2"
 )
 
 func ScrapePartThread(ctx context.Context, uri string) (*bakusai.Thread, error) {
@@ -23,9 +24,6 @@ func ScrapePartThread(ctx context.Context, uri string) (*bakusai.Thread, error) 
 	if err != nil {
 		return nil, fmt.Errorf(`on getPage(): %w`, err)
 	}
-
-	// defer resp.RawBody().Close()
-	// tdResList, err := findTDResList(resp.RawBody())
 
 	tdResList, err := findTDResList(bytes.NewReader(resp.Body()))
 	if err != nil {
