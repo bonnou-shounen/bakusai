@@ -41,8 +41,10 @@ func ScrapePartThread(ctx context.Context, uri string) (*bakusai.Thread, error) 
 func getPage(ctx context.Context, uri string,
 	retryCondition func(*resty.Response, error) bool,
 ) (*resty.Response, error) {
+	time.Sleep(1 * time.Second)
+
 	resp, err := resty.New().
-		SetRetryCount(3).SetRetryWaitTime(1 * time.Second).SetRetryMaxWaitTime(3 * time.Second).
+		SetRetryCount(5).SetRetryWaitTime(1 * time.Second).SetRetryMaxWaitTime(5 * time.Second).
 		AddRetryCondition(retryCondition).
 		AddRetryHook(func(r *resty.Response, err error) {
 			log.Printf("retry: %s", r.Request.URL)

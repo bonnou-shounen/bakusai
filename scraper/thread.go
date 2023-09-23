@@ -37,7 +37,7 @@ func ScrapeThread(ctx context.Context, uri string) (*bakusai.Thread, error) {
 		thread.ResList = append(thread.ResList, partThreads[page].ResList...)
 	}
 
-	thread.ResList = append(thread.ResList, lastThread.ResList[lastPage*50-lastResID:]...)
+	thread.ResList = append(thread.ResList, lastThread.ResList[lastPage*bakusai.MaxPageRes-lastResID:]...)
 
 	return &thread, nil
 }
@@ -64,7 +64,6 @@ func scrapeThreads(ctx context.Context, thread *bakusai.Thread, lastPage int) ([
 	threads := make([]*bakusai.Thread, lastPage+1)
 
 	for page := 1; page <= lastPage; page++ {
-
 		log.Printf("scraping page %d...", page)
 
 		partThread, err := ScrapePartThread(ctx, thread.PageURI(page))
