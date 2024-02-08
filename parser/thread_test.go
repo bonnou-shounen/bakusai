@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+
 	"github.com/bonnou-shounen/bakusai"
 	"github.com/bonnou-shounen/bakusai/parser"
 )

@@ -1,3 +1,3 @@
 package bakusai
 
-const Version = "0.1.8"
+const Version = "0.1.9"
