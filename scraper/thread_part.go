@@ -17,7 +17,7 @@ import (
 )
 
 func ScrapePartThread(ctx context.Context, uri string) (*bakusai.Thread, error) {
-	resp, err := getPage(ctx, uri, func(r *resty.Response, err error) bool {
+	resp, err := getPage(ctx, uri, func(r *resty.Response, _ error) bool {
 		// アクセス頻度制限にかかると記事のないエラーページが返る
 		return !strings.Contains(string(r.Body()), `<td class="reslist_td">`)
 	})
@@ -41,16 +41,18 @@ func ScrapePartThread(ctx context.Context, uri string) (*bakusai.Thread, error) 
 func getPage(ctx context.Context, uri string,
 	retryCondition func(*resty.Response, error) bool,
 ) (*resty.Response, error) {
+	restyClient := resty.New().
+		SetRetryCount(5).
+		SetRetryWaitTime(1 * time.Second).
+		SetRetryMaxWaitTime(5 * time.Second).
+		AddRetryCondition(retryCondition).
+		AddRetryHook(func(r *resty.Response, _ error) {
+			log.Printf("retry: %s", r.Request.URL)
+		})
+
 	time.Sleep(1 * time.Second)
 
-	resp, err := resty.New().
-		SetRetryCount(5).SetRetryWaitTime(1 * time.Second).SetRetryMaxWaitTime(5 * time.Second).
-		AddRetryCondition(retryCondition).
-		AddRetryHook(func(r *resty.Response, err error) {
-			log.Printf("retry: %s", r.Request.URL)
-		}).
-		R().SetContext(ctx).
-		Get(uri)
+	resp, err := restyClient.R().SetContext(ctx).Get(uri)
 	if err != nil {
 		return nil, fmt.Errorf(`on resty.Get("%s"): %w`, uri, err)
 	}
