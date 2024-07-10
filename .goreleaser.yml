@@ -21,7 +21,7 @@ archives:
   - format: zip
 brews:
   - description: cli for bakusai.com
-    tap:
+    repository:
       owner: bonnou-shounen
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
