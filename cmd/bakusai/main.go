@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/alecthomas/kong"
+
 	"github.com/bonnou-shounen/bakusai/internal/cmd"
 )
 
