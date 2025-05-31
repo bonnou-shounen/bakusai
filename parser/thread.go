@@ -28,13 +28,13 @@ func ParseThread(tdResList *goquery.Selection, thread *bakusai.Thread) error {
 
 func parseHeader(tdResList *goquery.Selection, thread *bakusai.Thread) error {
 	// ヘッダ
-	dtHeaeder := tdResList.Find(`dt.titleheader`)
-	if dtHeaeder.Length() == 0 {
+	dtHeader := tdResList.Find(`dt.titleheader`)
+	if dtHeader.Length() == 0 {
 		return fmt.Errorf(`missing: dt.titleheader`)
 	}
 
 	// スレッドID
-	strNO := dtHeaeder.Find(`span.thr_id a`).Text()
+	strNO := dtHeader.Find(`span.thr_id a`).Text()
 	if strNO == "" {
 		return fmt.Errorf(`empty: span.thr_id a`)
 	}
@@ -49,10 +49,10 @@ func parseHeader(tdResList *goquery.Selection, thread *bakusai.Thread) error {
 	thread.ThreadID = threadID
 
 	// タイトル
-	thread.Title = dtHeaeder.Find(`div#title_thr`).Text()
+	thread.Title = dtHeader.Find(`div#title_thr`).Text()
 
 	// スレ立て日時
-	strDatePublished := dtHeaeder.Find(`span[itemprop="datePublished"]`).Text()
+	strDatePublished := dtHeader.Find(`span[itemprop="datePublished"]`).Text()
 	if strDatePublished == "" {
 		return fmt.Errorf(`empty: span[itemprop="datePublished"]`)
 	}
