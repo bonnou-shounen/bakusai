@@ -15,7 +15,7 @@ func ScrapeThread(ctx context.Context, uri string) (*bakusai.Thread, error) {
 
 	lastPart, lastResID, err := scrapeLastThreadPart(ctx, uri)
 	if err != nil {
-		return nil, fmt.Errorf(`on scrapeLastPart(): %w`, err)
+		return nil, fmt.Errorf(`on scrapeLastThreadPart(): %w`, err)
 	}
 
 	lastPage := (lastResID + bakusai.MaxPageRes - 1) / bakusai.MaxPageRes
@@ -30,7 +30,7 @@ func ScrapeThread(ctx context.Context, uri string) (*bakusai.Thread, error) {
 
 	parts, err := scrapeThreadParts(ctx, &thread, lastPage-1)
 	if err != nil {
-		return nil, fmt.Errorf(`on scrapeThreadPages(): %w`, err)
+		return nil, fmt.Errorf(`on scrapeThreadParts(): %w`, err)
 	}
 
 	for page := 1; page < lastPage; page++ {
@@ -50,7 +50,7 @@ func scrapeLastThreadPart(ctx context.Context, argURI string) (*bakusai.Thread, 
 
 	part, err := ScrapeThreadPart(ctx, uri)
 	if err != nil {
-		return nil, 0, fmt.Errorf(`on ScrapePart(last): %w`, err)
+		return nil, 0, fmt.Errorf(`on ScrapeThreadPart(last): %w`, err)
 	}
 
 	part.URI = strings.Replace(part.URI, "/p=1/", "/", 1)
@@ -67,7 +67,7 @@ func scrapeThreadParts(ctx context.Context, thread *bakusai.Thread, lastPage int
 
 		part, err := ScrapeThreadPart(ctx, thread.PageURI(page))
 		if err != nil {
-			return nil, fmt.Errorf(`on Scrape([page=%d]): %w`, page, err)
+			return nil, fmt.Errorf(`on ScrapeThreadPart([page=%d]): %w`, page, err)
 		}
 
 		parts[page] = part
