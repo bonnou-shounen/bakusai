@@ -18,8 +18,7 @@ jobs:
         with:
           app-id: ${{ secrets.HOMEBREW_TAP_APP_ID }}
           private-key: ${{ secrets.HOMEBREW_TAP_PRIVATE_KEY }}
-          installation_retrieval_mode: repository
-          installation_retrieval_payload: bonnou-shounen/homebrew-tap
+          repositries: [ homebrew-tap ]
 
       - name: Set up Go
         uses: actions/setup-go@v5
