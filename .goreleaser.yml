@@ -19,7 +19,7 @@ builds:
       - arm64
 archives:
   - formats: [ zip ]
-brews:
+homebrew_casks:
   - description: cli for bakusai.com
     repository:
       owner: bonnou-shounen
