@@ -18,7 +18,7 @@ jobs:
         with:
           app-id: ${{ secrets.HOMEBREW_TAP_APP_ID }}
           private-key: ${{ secrets.HOMEBREW_TAP_PRIVATE_KEY }}
-          repositries: homebrew-tap
+          repositories: homebrew-tap
 
       - name: Set up Go
         uses: actions/setup-go@v5
